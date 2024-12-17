@@ -43,6 +43,23 @@ contract BondingCurveToken is ERC20Capped {
         if (msg.value < (price * amount) / PRECISION) {
             revert InvalidAmountError();
         }
+
+        // Computing amount
+        // if amount exceeds total supply, then mint the remaining amount
+        if (totalSupply() + amount > TOTAL_SUPPLY) {
+            amount = TOTAL_SUPPLY - totalSupply();
+            payable(msg.sender).transfer(msg.value - (price * amount) / PRECISION);
+            _mint(msg.sender, amount);
+            console.log("Deploying the pool...");
+            PoolKey memory pool = _createUniswapPool();
+            console.log("Adding liquidity to the pool...");
+            _addLiquidity(pool);
+        } else {
+            console.log("amount: %d", amount);
+            payable(msg.sender).transfer(msg.value - (price * amount) / PRECISION);
+            console.log("Minting %d tokens", amount);
+            _mint(msg.sender, amount);
+        }
     }
 
     function sell(uint256 amount) public {
