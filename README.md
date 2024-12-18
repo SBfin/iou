@@ -1,4 +1,4 @@
-![Governance Token Test](./img/Screenshot%202024-12-17%20at%201.21.03%20PM.png)
+![Governance Token Test](readmechart.png)
 
 ## Foundry
 
