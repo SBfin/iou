@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "forge-std/console.sol";
 
 contract GovernanceToken is ERC20, Ownable {
     // Dividend tracking
@@ -28,11 +29,14 @@ contract GovernanceToken is ERC20, Ownable {
     function distributeRevenue() external payable {
         require(msg.value > 0, "No revenue");
         // Update global accounting
+        console.log("inside distributeRevenue");
         if (totalSupply() > 0) {
             magnifiedDividendPerShare += (msg.value * magnificationFactor) / totalSupply();
         }
         totalReceived += msg.value;
     }
+
+    // TODO: override transfer function to track dividends
     /*
     function _transfer(address from, address to, uint256 amount) internal override {
         super._transfer(from, to, amount);
