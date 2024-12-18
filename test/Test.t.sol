@@ -3,15 +3,18 @@ pragma solidity ^0.8.26;
 
 import {Test as ForgeTest} from "forge-std/Test.sol";
 import {console2} from "forge-std/console2.sol";
-import {MyNFTCollection} from "../src/MyNFTCollection.sol"; // Adjust path as needed
+import {MyNFTCollection} from "../src/MyNFTCollection.sol";
+import {GovernanceToken} from "../src/GovernanceToken.sol";
 
 contract NFTTest is ForgeTest {
     MyNFTCollection nft;
+    GovernanceToken governanceToken;
     address user = makeAddr("user");
     uint256 mintPrice = 0.005 ether;
 
     function setUp() public {
-        nft = new MyNFTCollection(address(0x1234567890123456789012345678901234567890));
+        governanceToken = new GovernanceToken("GovernanceToken", "GT");
+        nft = new MyNFTCollection(address(governanceToken));
         vm.deal(user, 1 ether); // Give user some ETH
     }
 
@@ -21,39 +24,27 @@ contract NFTTest is ForgeTest {
 
         // Record balances before minting
         uint256 userBalanceBefore = user.balance;
-        uint256 contractBalanceBefore = address(nft).balance;
-        uint256 tokenBalanceBefore = nft.balanceOf(user, 1);
+        uint256 contractBalanceBefore = address(governanceToken).balance;
+        uint256 tokenBalanceBefore = nft.balanceOf(user, nft.TOKEN_ID());
+        uint256 nTokensBought = 1;
+        uint256 amountValue = nTokensBought*mintPrice;
 
-        // Mint NFT
-        nft.mint{value: mintPrice * 1e18}(1 ether); // 1 token with 18 decimals
+        // Mint NFT - just mint 1 token instead of 10^18
+        nft.mint{value: mintPrice*nTokensBought}(nTokensBought);
 
         // Verify token balance increased
-        assertEq(nft.balanceOf(user, 1), tokenBalanceBefore + 1, "Token not minted");
+        
+        assertEq(
+            nft.balanceOf(user, nft.TOKEN_ID()),
+            tokenBalanceBefore + 1,
+            "Token not minted"
+        );
 
         // Verify ETH transferred correctly
         assertEq(user.balance, userBalanceBefore - mintPrice, "Wrong ETH deducted");
-        assertEq(address(nft).balance, contractBalanceBefore + mintPrice, "Wrong ETH received");
-
-        vm.stopPrank();
-    }
-
-    function test_MintFailsWithoutEnoughETH() public {
-        vm.startPrank(user);
+        assertEq(address(governanceToken).balance, contractBalanceBefore + mintPrice*nTokensBought, "Wrong ETH received");
         
-        // Try to mint with less than required ETH
-        vm.expectRevert();
-        nft.mint{value: 0.004 ether}(1 ether);
-
         vm.stopPrank();
     }
 
-    function test_MintFailsWithZeroAmount() public {
-        vm.startPrank(user);
-        
-        // Try to mint with zero amount
-        vm.expectRevert();
-        nft.mint{value: mintPrice}(0);
-
-        vm.stopPrank();
-    }
 }

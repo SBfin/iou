@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-
+import "forge-std/console.sol";
 interface IRevenueDistributor {
     function distributeRevenue() external payable;
 }
@@ -28,6 +28,7 @@ contract MyNFTCollection is ERC1155, Ownable {
         (bool success, ) = governanceTokenAddress.call{value: msg.value}(
             abi.encodeWithSignature("distributeRevenue()")
         );
+        console.log("Revenue distribution success: ", success);
         require(success, "Revenue distribution failed");
     }
 
