@@ -2,19 +2,19 @@
 pragma solidity ^0.8.26;
 
 import {Test as ForgeTest} from "forge-std/Test.sol";
-import {console2} from "forge-std/console2.sol";
+import {console} from "forge-std/console.sol";
 import {MyNFTCollection} from "../src/MyNFTCollection.sol";
-import {GovernanceToken} from "../src/GovernanceToken.sol";
+import {RevToken} from "../src/RevToken.sol";
 
 contract NFTTest is ForgeTest {
     MyNFTCollection nft;
-    GovernanceToken governanceToken;
+    RevToken revToken;
     address user = makeAddr("user");
     uint256 mintPrice = 0.005 ether;
 
     function setUp() public {
-        governanceToken = new GovernanceToken("GovernanceToken", "GT");
-        nft = new MyNFTCollection(address(governanceToken));
+        revToken = new RevToken("RevToken", "GT");
+        nft = new MyNFTCollection(address(revToken));
         vm.deal(user, 1 ether); // Give user some ETH
     }
 
@@ -24,7 +24,7 @@ contract NFTTest is ForgeTest {
 
         // Record balances before minting
         uint256 userBalanceBefore = user.balance;
-        uint256 contractBalanceBefore = address(governanceToken).balance;
+        uint256 contractBalanceBefore = address(revToken).balance;
         uint256 tokenBalanceBefore = nft.balanceOf(user, nft.TOKEN_ID());
         uint256 nTokensBought = 1;
         uint256 amountValue = nTokensBought*mintPrice;
@@ -42,8 +42,28 @@ contract NFTTest is ForgeTest {
 
         // Verify ETH transferred correctly
         assertEq(user.balance, userBalanceBefore - mintPrice, "Wrong ETH deducted");
-        assertEq(address(governanceToken).balance, contractBalanceBefore + mintPrice*nTokensBought, "Wrong ETH received");
+        assertEq(address(revToken).balance, contractBalanceBefore + mintPrice*nTokensBought, "Wrong ETH received");
         
+        vm.stopPrank();
+    }
+
+    function test_withdrawableDividendOf() public {
+        
+        console.log("minting tokens for user", user);
+        // get owner of the gov token contract
+        address owner = revToken.owner();
+        console.log("owner", owner);
+
+        revToken.mintRevTokens(user, 100);
+
+        vm.startPrank(user);
+        // mint 1 nft
+        nft.mint{value: mintPrice}(1);
+
+        // check if user has dividends
+        console.log("withdrawableDividendOf", revToken.withdrawableDividendOf(user));
+        assertGt(revToken.withdrawableDividendOf(user), 0, "User has no dividends");
+
         vm.stopPrank();
     }
 

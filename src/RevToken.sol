@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "forge-std/console.sol";
 
-contract GovernanceToken is ERC20, Ownable {
+contract RevToken is ERC20, Ownable {
     // Dividend tracking
     uint256 public totalReceived; 
     uint256 public magnifiedDividendPerShare;
@@ -17,7 +17,7 @@ contract GovernanceToken is ERC20, Ownable {
 
     constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) Ownable(msg.sender) {
         // For example, you might mint governance tokens to the deployer or a treasury:
-        _mint(msg.sender, 1e6 * 1 ether);
+        _mint(msg.sender, 1);
     }
 
     receive() external payable {
@@ -69,10 +69,14 @@ contract GovernanceToken is ERC20, Ownable {
     // Returns the total accumulated dividends for `account`
     function accumulativeDividendOf(address account) public view returns(uint256) {
         int256 correction = magnifiedDividendCorrections[account];
+        console.log("correction", correction);
         int256 dividends = int256(magnifiedDividendPerShare * balanceOf(account)) + correction;
+        console.log("balanceOf", balanceOf(account));
+        console.log("magnifiedDividendPerShare", magnifiedDividendPerShare);
         if (dividends < 0) {
             return 0;
         }
+        console.log("dividends after magnification", uint256(dividends / int256(magnificationFactor)));
         return uint256(dividends / int256(magnificationFactor));
     }
 
@@ -87,7 +91,7 @@ contract GovernanceToken is ERC20, Ownable {
     }
 
     // Owner can mint governance tokens. In a real scenario, you'd have a proper distribution logic.
-    function mintGovernanceTokens(address to, uint256 amount) external onlyOwner {
+    function mintRevTokens(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
     }
 }
